@@ -13,15 +13,13 @@ RUN npm install
 # Copy the rest of the application code to the container
 COPY . .
 
-# Expose port 3000 for the React application
-EXPOSE 3000
-
-# Install Redis
+# Install Redis and MongoDB
 RUN apt-get update && \
-    apt-get install -y redis-server
+    apt-get install -y redis-server mongodb && \
+    mkdir -p /data/db
 
-# Expose port 6379 for Redis
-EXPOSE 6379
+# Expose ports 3000 for the React application, 6379 for Redis, and 27017 for MongoDB
+EXPOSE 3000 6379 27017
 
-# Start Redis and the React application
-CMD service redis-server start && npm start
+# Start Redis and MongoDB
+CMD service redis-server start && mongod --bind_ip_all && npm start
