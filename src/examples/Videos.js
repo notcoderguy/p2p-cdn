@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
-import videojs from 'video.js'
 import video from '../samples/video-1.mp4'
-import './Videos.css'
 
 
 const Videos = () => {
@@ -24,7 +22,7 @@ const Videos = () => {
 
         calculateHash();
     }, []);
-
+    
     return (
         <div>
             <MainNavbar />
@@ -38,8 +36,6 @@ const Videos = () => {
                     </p>
                     <div className="my-4 space-y-3 flex items-center justify-center">
                         <video
-                            className="video-js"
-                            id='my-video'
                             controls
                             preload="auto"
                             width="640"
@@ -47,13 +43,6 @@ const Videos = () => {
                             data-setup="{ }"
                         >
                             <source src={video} width="480px" type="video/mp4" integrity={hash} />
-                            <p class="vjs-no-js">
-                                To view this video please enable JavaScript, and consider upgrading to a
-                                web browser that
-                                <a href="https://videojs.com/html5-video-support/" target="_blank"
-                                >supports HTML5 video</a
-                                >
-                            </p>
                         </video>
                     </div>
                 </Card>

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
-import ReactImageGallery from 'react-image-gallery'
-import './Images.css'
 
 import image1 from '../samples/image-1.jpg'
 import image2 from '../samples/image-2.jpg'
@@ -22,71 +20,51 @@ const Images = () => {
             original: image1,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image2,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image3,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image4,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image5,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image6,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image7,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image8,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image9,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         },
         {
             original: image10,
             originalHeight: '270px',
             originalWidth: '480px',
-            description: '',
-            integrity: '',
         }
     ]
 
@@ -103,7 +81,6 @@ const Images = () => {
 
                 const hashArray = Array.from(new Uint8Array(hashBuffer));
                 const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                images[i].description = `sha-256=${hashHex}`;
                 images[i].integrity = `sha-256=${hashHex}`;
             }
 
@@ -124,17 +101,8 @@ const Images = () => {
                     </p>
                     <div className="my-4 space-y-3 flex items-center justify-center">
                         <div className="w-1/2 h-auto">
-                            <ReactImageGallery
-                                items={images}
-                                showPlayButton={true}
-                                showFullscreenButton={true}
-                                showNav={true}
-                                showBullets={true}
-                                showThumbnails={false}
-                                showIndex={true}
-                                lazyLoad={true}
-                                integrityCheck={true}
-                            />
+                            <img src={images[0].original} width={images[0].originalWidth} height={images[0].originalHeight} integrity={images[0].integrity} />
+                            < img src={images[1].original} width={images[1].originalWidth} height={images[1].originalHeight} integrity={images[1].integrity} />
                         </div>
                     </div>
                 </Card>
