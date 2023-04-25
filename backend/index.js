@@ -1,38 +1,27 @@
 const express = require('express');
-const mongooose = require('mongoose');
-const redis = require('ioredis');
-const fs = require('fs');
 require('dotenv').config();
+const mongooose = require('mongoose');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT;
 const db = process.env.DATABASE_URL;
-const cache = process.env.REDIS_URL;
-
-mongooose.connect(db)
-    .then(() => console.log('MongoDB connected...'))
-    .catch(err => console.log(err));
-
-const redisClient = new redis(cache);
-redisClient.on('connect', () => {
-    console.log('Redis connected...');
-});
-
-// Redis cache mmdb file
-const Reader = require('@maxmind/geoip2-node').Reader;
-redisClient.set('mmdb', fs.readFileSync('./GeoLite2-City.mmdb'))
-    .then(() => console.log('mmdb file loaded in redis...'))
-    .catch(err => console.log(err));
-
-try {
-    const reader = Reader.openBuffer(redisClient.get('mmdb'));
-    console.log(reader.city('1.1.1.1'));
-} catch (err) {
-    console.log(err);
-}
-
+const userRouter = require('./routes/user');
+const swarmRouter = require('./routes/swarm');
 
 app.use(express.json());
+
+// Allow cross-origin requests
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+});
+
+mongooose.connect(db)
+    .then(() => console.log('MongoDB Connected...'))
+    .catch(err => console.log(err));
 
 app.get('/', (req, res) => {
     json_content = {
@@ -62,15 +51,17 @@ app.get('/', (req, res) => {
     res.json(json_content);
 });
 
-app.use('/users', require('./routes/user'));
+app.use('/users', userRouter);
+
+app.use('/swarm', swarmRouter);
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  console.error(err.message, err.stack);
-  res.status(statusCode).json({ message: err.message });
+    const statusCode = err.statusCode || 500;
+    console.error(err.message, err.stack);
+    res.status(statusCode).json({ message: err.message });
 
-  return;
+    return;
 });
 
 app.listen(port, () => {

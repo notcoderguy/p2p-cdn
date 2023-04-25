@@ -1,20 +1,58 @@
 const express = require('express');
-const router = express.Router();
-const userController = require('../controllers/userController');
+const userRouter = express.Router();
+const { v4: uuidv4 } = require('uuid');
+const userSchema = require('../models/userModel');
+const mmdb = require('@maxmind/geoip2-node').Reader;
+const fs = require('fs');
 
-router.get('/', async function (req, res, next) {
+const mmdbBuffer = fs.readFileSync('./GeoLite2-City.mmdb');
+const mmdbReader = mmdb.openBuffer(mmdbBuffer);
+
+userRouter.get('/', async function (req, res, next) {
     try {
-        const users = await userController.genUserID();
-        res.json(users);
+        const uuid = uuidv4();
+        res.json({ uuid });
     } catch (err) {
-        console.error(`Error while getting users `, err.message);
+        console.error(`Error while generating userID `, err.message);
         next(err);
     }
 });
 
-router.get('/:id', async function (req, res, next) {
+userRouter.post('/', async function (req, res, next) {
     try {
-        const user = await userController.getUser(req.params.id);
+        uuid = req.body.uuid;
+        ip_encoded = req.body.ip;
+        ip = Buffer.from(ip_encoded, 'base64').toString('ascii');
+
+        ip_record = await mmdbReader.city(ip);
+        country = ip_record.country.names.en;
+        city = ip_record.city.names.en;
+        region = ip_record.continent.names.en;
+                
+        const user = new userSchema({
+            uuid: uuid,
+            ip: ip,
+            city: city,
+            country: country,
+            region: region,
+        });
+
+        try {
+            const savedUser = await user.save();
+            res.json(savedUser);
+        } catch (err) {
+            console.error(`Error while saving user `, err.message);
+            next(err);
+        }
+    } catch (err) {
+        console.error(`Error while saving user `, err.message);
+        next(err);
+    }
+});
+
+userRouter.get('/:uuid', async function (req, res, next) {
+    try {
+        const user = await userSchema.findOne({ uuid: req.params.uuid });
         res.json(user);
     } catch (err) {
         console.error(`Error while getting user info `, err.message);
@@ -22,9 +60,12 @@ router.get('/:id', async function (req, res, next) {
     }
 });
 
-router.put('/:id', async function (req, res, next) {
+userRouter.put('/:uuid/:swarmid', async function (req, res, next) {
     try {
-        const user = await userController.updateUser(req.params.id, req.body);
+        const user = await userSchema.findOneAndUpdate(
+            { uuid: req.params.uuid },
+            { swarm: req.params.swarmid }
+        );
         res.json(user);
     } catch (err) {
         console.error(`Error while updating user info `, err.message);
@@ -32,4 +73,4 @@ router.put('/:id', async function (req, res, next) {
     }
 });
 
-module.exports = router;
+module.exports = userRouter;
