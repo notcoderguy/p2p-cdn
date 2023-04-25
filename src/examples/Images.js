@@ -14,7 +14,6 @@ import image9 from "../samples/image-9.jpg";
 import image10 from "../samples/image-10.jpg";
 
 const Images = () => {
-  const [inter, setinter] = useState();
   const once = useRef(true);
   const images = [
     {
@@ -80,7 +79,6 @@ const Images = () => {
   ];
 
   const [hash, setHash] = useState([]);
-  const [integrity, setIntegrity] = useState([]);
 
   useEffect(() => {
     if (once.current) {
@@ -114,18 +112,17 @@ const Images = () => {
             This is a real world example of how you can use P2P-CDN to stream
             images.
           </p>
-          <div className="my-4 space-y-3 flex items-center justify-center">
-            <div className="flex flex-wrap">
+          <div className="space-y-3 space-x-3 flex flex-wrap items-center justify-center">
               {hash &&
                 images.map((e, index) => (
                   <img
                     src={images[index].original}
+                    alt={`demo${index + 1}`}
                     width={images[index].originalWidth}
                     height={images[index].originalHeight}
                     integrity={hash[index]}
                   />
                 ))}
-            </div>
           </div>
         </Card>
       </div>
