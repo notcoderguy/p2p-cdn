@@ -3,7 +3,6 @@ import { Card } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
 import video from '../samples/video-1.mp4'
 
-
 const Videos = () => {
     const [hash, setHash] = useState('');
 
