@@ -32,7 +32,11 @@ function App() {
 
     if (!localStorage.getItem('ip')) {
       getData();
-    }
+    } 
+    // else {
+    //   getCity();
+    // }
+    
   }, [])
   return (
     <div className="App selection:bg-blue-500 scrollbar-hide selection:text-black">
