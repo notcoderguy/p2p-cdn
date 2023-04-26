@@ -12,6 +12,7 @@ import image7 from "../samples/image-7.jpg";
 import image8 from "../samples/image-8.jpg";
 import image9 from "../samples/image-9.jpg";
 import image10 from "../samples/image-10.jpg";
+import { audio } from "../utils/storemedia";
 
 const Images = () => {
   const once = useRef(true);
@@ -79,6 +80,7 @@ const Images = () => {
   ];
 
   const [hash, setHash] = useState([]);
+  const [imageSrc, setimageSrc] = useState();
 
   useEffect(() => {
     if (once.current) {
@@ -100,6 +102,10 @@ const Images = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   audio(image1);
+  // }, []);
+
   return (
     <div>
       <MainNavbar />
@@ -113,18 +119,20 @@ const Images = () => {
             images.
           </p>
           <div className="space-y-3 space-x-3 flex flex-wrap items-center justify-center">
-              {hash &&
-                images.map((e, index) => (
-                  <img
-                    src={images[index].original}
-                    alt={`demo${index + 1}`}
-                    width={images[index].originalWidth}
-                    height={images[index].originalHeight}
-                    integrity={hash[index]}
-                  />
-                ))}
+            {hash &&
+              images.map((e, index) => (
+                <img
+                  src={images[index].original}
+                  alt={`demo${index + 1}`}
+                  width={images[index].originalWidth}
+                  height={images[index].originalHeight}
+                  integrity={hash[index]}
+                />
+              ))}
           </div>
         </Card>
+        <input type="file" onChange={(e) => setimageSrc(audio(e.target))} />
+        {imageSrc && <img src={imageSrc} />}
       </div>
     </div>
   );
