@@ -12,7 +12,6 @@ import image7 from "../samples/image-7.jpg";
 import image8 from "../samples/image-8.jpg";
 import image9 from "../samples/image-9.jpg";
 import image10 from "../samples/image-10.jpg";
-import { audio } from "../utils/storemedia";
 
 const Images = () => {
   const once = useRef(true);
@@ -131,8 +130,6 @@ const Images = () => {
               ))}
           </div>
         </Card>
-        <input type="file" onChange={(e) => setimageSrc(audio(e.target))} />
-        {imageSrc && <img src={imageSrc} />}
       </div>
     </div>
   );

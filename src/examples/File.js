@@ -1,26 +1,54 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Button } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
-import file from '../samples/file-1.zip'
+import fileZip from '../samples/file-1.zip'
+import { saveFile, getFileByName, fileExistsByName, getFileHashByName } from '../utils/idb'
 
 const File = () => {
-    const [hash, setHash] = useState('');
+    const [fileBlobUrl, setFileBlobUrl] = useState(null);
+    const [fileExists, setFileExists] = useState();
 
     useEffect(() => {
-        async function calculateHash() {
-            const response = await fetch(file);
-
-            const buffer = await response.arrayBuffer();
-
-            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
-
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            setHash(`sha-256=${hashHex}`);
+        async function indexedDBFileExists() {
+            const exists = await fileExistsByName('file-1.zip');
+            setFileExists(exists);
         }
 
-        calculateHash();
+        indexedDBFileExists();
     }, []);
+
+    useEffect(() => {
+        async function getIndexedDBFile() {
+            const fileZip = await getFileByName('file-1.zip');
+            if (fileZip) {
+                const blob = new Blob([fileZip.content], { type: 'application/zip' });
+                setFileBlobUrl(URL.createObjectURL(blob));
+            } else {
+                setFileBlobUrl(null);
+            }
+        }
+        
+        async function saveIndexedDBFile() {
+            const fileStatus = await fetch(fileZip);
+            const blob = await fileStatus.blob();
+    
+            const buffer = await blob.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+            await saveFile('file-1.zip', buffer, `sha-256=${hashHex}`); // `sha-256=${hashHex}`
+            const blobURL = new Blob([blob], { type: 'application/zip' });
+            setFileBlobUrl(URL.createObjectURL(blobURL));
+            setFileExists(true);
+        }
+
+        if (fileExists === true) {
+            getIndexedDBFile();
+        } else if (fileExists === false) {
+            saveIndexedDBFile();
+        }
+    }, [fileExists]);
 
     return (
         <div>
@@ -37,9 +65,8 @@ const File = () => {
                         <Button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded"
                             onClick={() => {
-                                window.location.href = file
+                                window.location.href = fileBlobUrl;
                             }}
-                            integrity={hash}
                         >
                             Download
                         </Button>

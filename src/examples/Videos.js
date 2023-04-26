@@ -2,26 +2,54 @@ import React, { useState, useEffect } from 'react'
 import { Card } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
 import video from '../samples/video-1.mp4'
+import ReactPlayer from 'react-player'
+import { saveVideoFile, getVideoFileByName, videoFileExistsByName, getVideoFileHashByName } from '../utils/idb'
 
 const Videos = () => {
-    const [hash, setHash] = useState('');
+    const [videoFileBlobUrl, setVideoFileBlobUrl] = useState(null);
+    const [videoFileExists, setVideoFileExists] = useState();
 
     useEffect(() => {
-        async function calculateHash() {
-            const response = await fetch(video);
-
-            const buffer = await response.arrayBuffer();
-
-            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
-
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            setHash(`sha-256=${hashHex}`);
+        async function indexedDBVideoFileExists() {
+            const exists = await videoFileExistsByName('video-1.mp4');
+            setVideoFileExists(exists);
         }
 
-        calculateHash();
+        indexedDBVideoFileExists();
     }, []);
-    
+
+    useEffect(() => {
+        async function getIndexedDBVideoFile() {
+            const videoFile = await getVideoFileByName('video-1.mp4');
+            if (videoFile) {
+                const blob = new Blob([videoFile.content], { type: 'video/mp4' });
+                setVideoFileBlobUrl(URL.createObjectURL(blob));
+            } else {
+                setVideoFileBlobUrl(null);
+            }
+        }
+
+        async function saveIndexedDBVideoFile() {
+            const file = await fetch(video);
+
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            await saveVideoFile('video-1.mp4', buffer, `sha-256=${hashHex}`); // `sha-256=${hashHex}`
+            const blobURL = new Blob([buffer], { type: 'video/mp4' });
+            setVideoFileBlobUrl(URL.createObjectURL(blobURL));
+            setVideoFileExists(true);
+        }
+
+        if (videoFileExists === true) {
+            getIndexedDBVideoFile();
+        } else if (videoFileExists === false) {
+            saveIndexedDBVideoFile();
+        }
+    }, [videoFileExists]);
+
     return (
         <div>
             <MainNavbar />
@@ -34,15 +62,12 @@ const Videos = () => {
                         This is a real world example of how you can use P2P-CDN to stream video.
                     </p>
                     <div className="my-4 space-y-3 flex items-center justify-center">
-                        <video
-                            controls
-                            preload="auto"
-                            width="640"
-                            height="264"
-                            data-setup="{ }"
-                        >
-                            <source src={video} width="480px" type="video/mp4" integrity={hash} />
-                        </video>
+                        <ReactPlayer
+                            url={videoFileBlobUrl}
+                            controls={true}
+                            width="640px"
+                            height="264px"
+                        />
                     </div>
                 </Card>
             </div>

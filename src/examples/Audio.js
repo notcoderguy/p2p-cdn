@@ -3,25 +3,52 @@ import { Card } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
 import ReactAudioPlayer from 'react-audio-player'
 import audio from '../samples/audio-1.mp3'
+import { saveAudioFile, getAudioFileByName, audioFileExistsByName, getAudioFileHashByName } from '../utils/idb'
 
 const Audio = () => {
-    const [hash, setHash] = useState('');
+    const [audioFileBlobUrl, setAudioFileBlobUrl] = useState(null);
+    const [audioFileExists, setAudioFileExists] = useState();
 
     useEffect(() => {
-        async function calculateHash() {
-            const response = await fetch(audio);
-
-            const buffer = await response.arrayBuffer();
-
-            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
-            
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            setHash(`sha-256=${hashHex}`);
+        async function indexedDBAudioFileExists() {
+            const exists = await audioFileExistsByName('audio-1.mp3');
+            setAudioFileExists(exists);
         }
 
-        calculateHash();
+        indexedDBAudioFileExists();
     }, []);
+
+    useEffect(() => {
+        async function getIndexedDBAudioFile() {
+            const file = await getAudioFileByName('audio-1.mp3');
+            if (file) {
+                const blob = new Blob([file.content], { type: 'audio/mpeg' });
+                setAudioFileBlobUrl(URL.createObjectURL(blob));
+            } else {
+                setAudioFileBlobUrl(null);
+            }
+        }
+
+        async function saveIndexedDBAudioFile() {
+            const file = await fetch(audio);
+    
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+            await saveAudioFile('audio-1.mp3', buffer, `sha-256=${hashHex}`); // `sha-256=${hashHex}`
+            const blobURL = new Blob([buffer], { type: 'audio/mpeg' });
+            setAudioFileBlobUrl(URL.createObjectURL(blobURL));
+            setAudioFileExists(true);
+        }
+
+        if (audioFileExists === true) {
+            getIndexedDBAudioFile();
+        } else if (audioFileExists === false) {            
+            saveIndexedDBAudioFile();
+        }
+    }, [audioFileExists]);
 
     return (
         <div>
@@ -36,9 +63,9 @@ const Audio = () => {
                     </p>
                     <div className="my-4 space-y-3 flex items-center justify-center">
                         <ReactAudioPlayer
+                            src={audioFileBlobUrl}
                             controls
                         >
-                            <source src={audio} type="audio/mpeg" integrity={hash} />
                         </ReactAudioPlayer>
                     </div>
                 </Card>
