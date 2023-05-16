@@ -9,6 +9,13 @@ const db = process.env.DATABASE_URL;
 const userRouter = require('./routes/user');
 const swarmRouter = require('./routes/swarm');
 
+const server = require('http').createServer(app);
+const io = require('socket.io')(server, {
+    cors: {
+        origin: '*',
+    }
+});
+
 app.use(express.json());
 
 // Allow cross-origin requests
@@ -23,7 +30,9 @@ mongooose.connect(db)
     .then(() => console.log('MongoDB Connected...'))
     .catch(err => console.log(err));
 
+// Route to provide information about the P2P-CDN project
 app.get('/', (req, res) => {
+    // JSON content describing the project and its contributors
     json_content = {
         "name": "P2P-CDN",
         "version": "1.0.0",
@@ -51,8 +60,10 @@ app.get('/', (req, res) => {
     res.json(json_content);
 });
 
+// Route for handling user-related operations
 app.use('/users', userRouter);
 
+// Route for handling swarm-related operations
 app.use('/swarm', swarmRouter);
 
 /* Error handler middleware */
@@ -64,6 +75,48 @@ app.use((err, req, res, next) => {
     return;
 });
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+// Listen for incoming socket connections
+io.on('connection', (socket) => {
+    let uuid;
+    let swarmId;
+
+    // Handle join messages
+    socket.on('welcome', (data, swarm_data) => {
+        // Handle join message from the sender
+        // Forward the join message to the intended recipient
+        uuid = data;
+        swarmId = swarm_data;
+        console.log(`User ${data} connected.`);
+    });
+
+    // Join swarm handler
+    socket.on('joinSwarm', (data) => {
+        // Handle join swarm message from the sender
+        // Forward the join swarm message to the intended recipient
+        socket.broadcast.emit('joinSwarm', data);
+    });
+
+    // Send data handler
+    socket.on('sendData', (data) => {
+        // Handle send data message from the sender
+        // Forward the send data message to the intended recipient
+        socket.broadcast.emit('sendData', data);
+    });
+
+    // ICE candidate handler
+    socket.on('iceCandidate', (data) => {
+        // Handle ICE candidate message from the sender
+        // Forward the ICE candidate to the intended recipient
+        socket.broadcast.emit('iceCandidate', data);
+    });
+
+    // Disconnect handler
+    socket.on('disconnect', async () => {
+        console.log(`User disconnected`);
+    });
+});
+
+// Start the server
+server.listen(port, () => {
+    console.log(`Signaling & API server running on http://localhost:${port}`);
 });

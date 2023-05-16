@@ -8,8 +8,10 @@ const fs = require('fs');
 const mmdbBuffer = fs.readFileSync('./GeoLite2-City.mmdb');
 const mmdbReader = mmdb.openBuffer(mmdbBuffer);
 
+// GET request to generate a unique user ID
 userRouter.get('/', async function (req, res, next) {
     try {
+        // Generate a UUID for the user
         const uuid = uuidv4();
         res.json({ uuid });
     } catch (err) {
@@ -18,17 +20,21 @@ userRouter.get('/', async function (req, res, next) {
     }
 });
 
+// POST request to save user information
 userRouter.post('/', async function (req, res, next) {
     try {
+        // Extract necessary information from the request body
         uuid = req.body.uuid;
         ip_encoded = req.body.ip;
         ip = Buffer.from(ip_encoded, 'base64').toString('ascii');
 
+        // Retrieve geolocation information based on the IP address
         ip_record = await mmdbReader.city(ip);
         country = ip_record.country.names.en;
         city = ip_record.city.names.en;
         region = ip_record.continent.names.en;
                 
+        // Create a new user object with the extracted information
         const user = new userSchema({
             uuid: uuid,
             ip: ip,
@@ -38,6 +44,7 @@ userRouter.post('/', async function (req, res, next) {
         });
 
         try {
+            // Save the user object to the database
             const savedUser = await user.save();
             res.json(savedUser);
         } catch (err) {
@@ -50,8 +57,10 @@ userRouter.post('/', async function (req, res, next) {
     }
 });
 
+// GET request to retrieve user information based on UUID
 userRouter.get('/:uuid', async function (req, res, next) {
     try {
+        // Find the user in the database based on the UUID parameter
         const user = await userSchema.findOne({ uuid: req.params.uuid });
         res.json(user);
     } catch (err) {
@@ -60,8 +69,10 @@ userRouter.get('/:uuid', async function (req, res, next) {
     }
 });
 
+// PUT request to update user's swarm information
 userRouter.put('/:uuid/:swarmid', async function (req, res, next) {
     try {
+        // Find the user in the database based on the UUID parameter and update the swarm field
         const user = await userSchema.findOneAndUpdate(
             { uuid: req.params.uuid },
             { swarm: req.params.swarmid }

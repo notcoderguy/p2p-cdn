@@ -4,10 +4,12 @@ import MainNavbar from '../MainNavbar'
 import ReactAudioPlayer from 'react-audio-player'
 import audio from '../samples/audio-1.mp3'
 import { saveAudioFile, getAudioFileByName, audioFileExistsByName, getAudioFileHashByName } from '../utils/idb'
+import io from "socket.io-client";
 
 const Audio = () => {
     const [audioFileBlobUrl, setAudioFileBlobUrl] = useState(null);
     const [audioFileExists, setAudioFileExists] = useState();
+    const [socket, setSocket] = useState();
 
     useEffect(() => {
         async function indexedDBAudioFileExists() {
@@ -15,7 +17,19 @@ const Audio = () => {
             setAudioFileExists(exists);
         }
 
+        async function socketConnect() {
+            const socket = io('http://localhost:8000')
+            setSocket(socket);
+            let uuid = localStorage.getItem('uuid');
+            let swarmid = localStorage.getItem('swarmid');
+            socket.on('connect', () => {
+                console.log('connected to signaling server.');
+            });
+            socket.emit('welcome', uuid, swarmid);
+        }
+
         indexedDBAudioFileExists();
+        socketConnect();
     }, []);
 
     useEffect(() => {
