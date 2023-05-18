@@ -10,7 +10,7 @@ import {
     getAudioFileHashByName,
 } from "../utils/idb";
 import { getData } from "../utils/sockets";
-import { acceptRequest, rejectRequest, sendRequest } from "./../utils/peer";
+import { acceptRequest, sendRequest } from "./../utils/peer";
 import io from "socket.io-client";
 import Peer from "simple-peer";
 

@@ -10,7 +10,7 @@ import Image from "./examples/Images";
 import File from "./examples/File";
 import Info from "./Info";
 import { connect } from "./utils/sockets";
-import { acceptRequest, rejectRequest, sendRequest } from "./utils/peer";
+import { acceptRequest, sendRequest } from "./utils/peer";
 
 import io from "socket.io-client";
 import Peer from "simple-peer";
