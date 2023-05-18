@@ -4,7 +4,12 @@ import MainNavbar from '../MainNavbar'
 import video from '../samples/video-1.mp4'
 import ReactPlayer from 'react-player'
 import { saveVideoFile, getVideoFileByName, videoFileExistsByName, getVideoFileHashByName } from '../utils/idb'
+import { getData } from "../utils/sockets";
+import { acceptRequest, rejectRequest, sendRequest } from "./../utils/peer";
+import io from "socket.io-client";
+import Peer from "simple-peer";
 
+const socket = io("http://localhost:8000");
 const Videos = () => {
     const [videoFileBlobUrl, setVideoFileBlobUrl] = useState(null);
     const [videoFileExists, setVideoFileExists] = useState();
@@ -46,9 +51,47 @@ const Videos = () => {
         if (videoFileExists === true) {
             getIndexedDBVideoFile();
         } else if (videoFileExists === false) {
-            saveIndexedDBVideoFile();
+            let uuid = localStorage.getItem("uuid");
+            let swarmid = localStorage.getItem("swarmid");
+            let status = getData(swarmid, uuid, "video-1.mp4");
+            if (status) {
+                try {
+                    acceptRequest(swarmid, uuid);
+                } catch (error) {
+                    saveIndexedDBVideoFile();
+                }
+            } else {
+                saveIndexedDBVideoFile();
+            }
         }
     }, [videoFileExists]);
+
+    useEffect(() => {
+        socket.on("hasData", (swarmdid, uuid, whichData) => {
+            if (uuid !== localStorage.getItem("uuid")) {
+                console.log(`${uuid} is requesting ${whichData}`);
+                if (whichData === "video-1.mp4") {
+                    async function getIndexedDBVideoFile() {
+                        try {
+                            const videoFile = await getVideoFileByName('video-1.mp4');
+                            if (videoFile) {
+                                const blob = new Blob([videoFile.content], { type: 'video/mp4' });
+                                setVideoFileBlobUrl(URL.createObjectURL(blob));
+                                console.log("Sending file to peer...");
+                                socket.emit("sendData", swarmdid, uuid, blob, true);
+                            } else {
+                                socket.emit("sendData", swarmdid, uuid, null, false);
+                                console.log("The requested file does not exist in the cache.");
+                            }
+                        } catch (error) {
+                            console.log("The requested file does not exist in the cache.");
+                        }
+                    }
+                    getIndexedDBVideoFile();
+                }
+            }
+        });
+    });
 
     return (
         <div>

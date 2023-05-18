@@ -2,8 +2,11 @@ import React, { useEffect } from "react";
 import { Navbar, Button } from "flowbite-react";
 import { useNavigate } from 'react-router-dom';
 
+// Main navigation bar component
 function MainNavbar() {
     const navigate = useNavigate();
+
+    // Set the document title when the component mounts
     useEffect(() => {
         document.title = "P2P-CDN";
     }, []);
@@ -19,9 +22,9 @@ function MainNavbar() {
                 </span>
             </Navbar.Brand>
             <div className="flex md:order-2">
-                {/* Setting Button */}
+                {/* Info Button */}
                 <Button
-                    onClick={() => navigate('/settings')}
+                    onClick={() => navigate('/info')}
                     className="mr-2"
                     variant="outline"
                     color="primary"

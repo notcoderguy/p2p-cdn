@@ -3,7 +3,12 @@ import { Card, Button } from 'flowbite-react'
 import MainNavbar from '../MainNavbar'
 import fileZip from '../samples/file-1.zip'
 import { saveFile, getFileByName, fileExistsByName, getFileHashByName } from '../utils/idb'
+import { getData } from "../utils/sockets";
+import { acceptRequest, rejectRequest, sendRequest } from "./../utils/peer";
+import io from "socket.io-client";
+import Peer from "simple-peer";
 
+const socket = io("http://localhost:8000");
 const File = () => {
     const [fileBlobUrl, setFileBlobUrl] = useState(null);
     const [fileExists, setFileExists] = useState();
@@ -27,16 +32,16 @@ const File = () => {
                 setFileBlobUrl(null);
             }
         }
-        
+
         async function saveIndexedDBFile() {
             const fileStatus = await fetch(fileZip);
             const blob = await fileStatus.blob();
-    
+
             const buffer = await blob.arrayBuffer();
             const hashBuffer = await crypto.subtle.digest('sha-256', buffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
+
             await saveFile('file-1.zip', buffer, `sha-256=${hashHex}`); // `sha-256=${hashHex}`
             const blobURL = new Blob([blob], { type: 'application/zip' });
             setFileBlobUrl(URL.createObjectURL(blobURL));
@@ -46,9 +51,47 @@ const File = () => {
         if (fileExists === true) {
             getIndexedDBFile();
         } else if (fileExists === false) {
-            saveIndexedDBFile();
+            let uuid = localStorage.getItem("uuid");
+            let swarmid = localStorage.getItem("swarmid");
+            let status = getData(swarmid, uuid, "file-1.zip");
+            if (status) {
+                try {
+                    acceptRequest(swarmid, uuid);
+                } catch (error) {
+                    saveIndexedDBFile();
+                }
+            } else {
+                saveIndexedDBFile();
+            }
         }
     }, [fileExists]);
+
+    useEffect(() => {
+        socket.on("hasData", (swarmdid, uuid, whichData) => {
+            if (uuid !== localStorage.getItem("uuid")) {
+                console.log(`${uuid} is requesting ${whichData}`);
+                if (whichData === "file-1.zip") {
+                    async function getIndexedDBFile() {
+                        try {
+                            const fileZip = await getFileByName('file-1.zip');
+                            if (fileZip) {
+                                const blob = new Blob([fileZip.content], { type: 'application/zip' });
+                                setFileBlobUrl(URL.createObjectURL(blob));
+                                console.log("Sending file to peer...");
+                                socket.emit("sendData", swarmdid, uuid, blob, true);
+                            } else {
+                                socket.emit("sendData", swarmdid, uuid, null, false);
+                                console.log("The requested file does not exist in the cache.");
+                            }
+                        } catch (error) {
+                            console.log("The requested file does not exist in the cache.");
+                        }
+                    }
+                    getIndexedDBFile();
+                }
+            }
+        });
+    });
 
     return (
         <div>

@@ -1,14 +1,16 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Card } from 'flowbite-react'
-import MainNavbar from './MainNavbar'
-
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Card } from 'flowbite-react';
+import MainNavbar from './MainNavbar';
 
 const Home = () => {
     return (
         <div>
+            {/* Render the main navigation bar */}
             <MainNavbar />
+
             <div className="grid place-content-center min-h-screen">
+                {/* Render a card with real-world examples */}
                 <Card className='flex items-center justify-center'>
                     <h5 className="mb-3 text-base font-semibold text-gray-900 dark:text-white lg:text-xl">
                         Real World Examples
@@ -16,7 +18,9 @@ const Home = () => {
                     <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
                         These are real world examples of how you can use P2P-CDN.
                     </p>
+
                     <ul className="my-4 space-y-3">
+                        {/* Render a link for streaming audio */}
                         <li>
                             <Link
                                 to="/audio"
@@ -30,6 +34,7 @@ const Home = () => {
                                 </span>
                             </Link>
                         </li>
+                        {/* Render a link for streaming video */}
                         <li>
                             <Link
                                 to="/video"
@@ -43,6 +48,7 @@ const Home = () => {
                                 </span>
                             </Link>
                         </li>
+                        {/* Render a link for loading multiple images */}
                         <li>
                             <Link
                                 to="/image"
@@ -56,6 +62,7 @@ const Home = () => {
                                 </span>
                             </Link>
                         </li>
+                        {/* Render a link for file sharing */}
                         <li>
                             <Link
                                 to="/file"
@@ -73,8 +80,7 @@ const Home = () => {
                 </Card>
             </div>
         </div>
-
-    )
+    );
 }
 
-export default Home
+export default Home;

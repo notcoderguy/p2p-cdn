@@ -16,7 +16,8 @@ const io = require("socket.io")(server, {
   },
 });
 
-let users_List = [];
+const Redis = require("ioredis");
+const redis = new Redis();
 
 app.use(express.json());
 
@@ -84,21 +85,55 @@ io.on("connection", (socket) => {
   let uuid;
   let swarmId;
   // Handle join messages
-  socket.on("welcome", (data) => {
+  socket.on("welcome", (uuid_data, swarm_data) => {
     // Handle join message from the sender
     // Forward the join message to the intended recipient
-    uuid = data;
-    users_List.push(uuid);
-    console.log(`User ${data} connected.`);
+    console.log(`User ${uuid_data} joined swarm ${swarm_data}`);
+    uuid = uuid_data;
+    swarmId = swarm_data;
+    if (redis.exists(swarmId)) {
+      redis.sadd(swarmId, uuid);
+    } else {
+      redis.sadd(swarmId, uuid);
+      redis.expire(swarmId, 86400);
+    }
+    console.log(`User ${uuid} joined swarm ${swarmId}`);
+    socket.emit("connectionConfirmation", uuid, swarmId);
   });
 
-  socket.on("requestData", (uuid, whichData) => {
-    socket.broadcast.emit("hasData", uuid, whichData);
+  socket.on("requestData", (swarmId, uuid, whichData) => {
+    console.log(`User ${uuid} requested ${whichData} from swarm ${swarmId}`);
+    redis.smembers(swarmId, (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        if (result.length > 1) {
+          socket.broadcast.emit("hasData", swarmId, uuid, whichData);
+        } else {
+          console.log("No peers found in swarm. Instructing user to get data from origin server."); 
+          socket.emit("noData", true);
+        }
+      }
+    }); 
+  });
+
+  socket.on("sendData", (swarmId, uuid, data, status) => {
+    if (status) {
+      console.log(`User ${uuid} sent data to swarm ${swarmId}`);
+      io.to(uuid).emit("receiveData", data);
+    } else {
+      console.log(`User ${uuid} failed to send data to swarm ${swarmId}`);
+    }
   });
 
   // Disconnect handler
   socket.on("disconnect", async () => {
-    console.log(`User disconnected`);
+    // Handle disconnect message from the sender
+    // Forward the disconnect message to the intended recipient
+    if (uuid && swarmId) {
+      redis.srem(swarmId, uuid);
+      console.log(`User ${uuid} left swarm ${swarmId}`);
+    }
   });
 });
 

@@ -95,7 +95,11 @@ async function assetExistsByName(storeName, fileName) {
     const store = transaction.objectStore(storeName);
     const index = store.index('name');
     const match = await index.get(fileName);
-    console.log(match !== undefined);
+    if (match === undefined) {
+        console.log(`File ${fileName} does not exist in cache.`);
+    } else {
+        console.log(`File ${fileName} exists in cache.`);
+    }
     return match !== undefined;
 }
 
